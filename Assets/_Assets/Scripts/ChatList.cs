@@ -5,15 +5,14 @@ namespace Neocortex.Samples
 {
     public class ChatList : MonoBehaviour
     {
-        [Header("Chat Management")]
         [SerializeField] private List<ChatCharacter> chatCharacters = new List<ChatCharacter>();
         
         [Header("UI References")]
         [SerializeField] private Transform chatItemsContainer;
         [SerializeField] private GameObject chatItemPrefab;
 
-        private List<ChatItem> chatItems = new List<ChatItem>();
-        private ChatCharacter currentActiveChat;
+        private readonly List<ChatItem> _chatItems = new List<ChatItem>();
+        private ChatCharacter _currentActiveChat;
 
         void Start()
         {
@@ -23,14 +22,14 @@ namespace Neocortex.Samples
         private void InitializeChatList()
         {
             // Clear existing items
-            foreach (var item in chatItems)
+            foreach (var item in _chatItems)
             {
                 if (item != null)
                 {
                     Destroy(item.gameObject);
                 }
             }
-            chatItems.Clear();
+            _chatItems.Clear();
 
             // Create chat items for each chat character
             foreach (var chatChar in chatCharacters)
@@ -45,7 +44,7 @@ namespace Neocortex.Samples
                 {
                     chatItem.Initialize(chatChar);
                     chatItem.OnChatSelected.AddListener(SelectChat);
-                    chatItems.Add(chatItem);
+                    _chatItems.Add(chatItem);
 
                     // Subscribe to message updates
                     chatChar.OnMessageUpdated.AddListener(() => UpdateChatItem(chatChar));
@@ -61,14 +60,14 @@ namespace Neocortex.Samples
             if (chatCharacter == null) return;
 
             // Hide current active chat
-            if (currentActiveChat != null)
+            if (_currentActiveChat != null)
             {
-                currentActiveChat.Hide();
+                _currentActiveChat.Hide();
             }
 
             // Show selected chat
-            currentActiveChat = chatCharacter;
-            currentActiveChat.Show();
+            _currentActiveChat = chatCharacter;
+            _currentActiveChat.Show();
 
             Debug.Log($"Selected chat: {chatCharacter.CharacterData.CharacterName}");
         }
@@ -77,64 +76,20 @@ namespace Neocortex.Samples
         {
             // Find the chat item index that corresponds to this chat character
             int index = chatCharacters.IndexOf(chatCharacter);
-            if (index >= 0 && index < chatItems.Count)
+            if (index >= 0 && index < _chatItems.Count)
             {
-                ChatItem item = chatItems[index];
+                ChatItem item = _chatItems[index];
                 if (item != null)
                 {
                     item.UpdateUI();
                 }
             }
         }
-
-        public void AddChat(ChatCharacter chatCharacter)
-        {
-            if (chatCharacter == null || chatCharacters.Contains(chatCharacter))
-                return;
-
-            chatCharacters.Add(chatCharacter);
-            
-            // Create chat item
-            GameObject itemObj = Instantiate(chatItemPrefab, chatItemsContainer);
-            ChatItem chatItem = itemObj.GetComponent<ChatItem>();
-            
-            if (chatItem != null)
-            {
-                chatItem.Initialize(chatCharacter);
-                chatItem.OnChatSelected.AddListener(SelectChat);
-                chatItems.Add(chatItem);
-                
-                chatCharacter.OnMessageUpdated.AddListener(() => UpdateChatItem(chatCharacter));
-            }
-
-            chatCharacter.Hide();
-        }
-
-        public void RemoveChat(ChatCharacter chatCharacter)
-        {
-            if (chatCharacter == null) return;
-
-            int index = chatCharacters.IndexOf(chatCharacter);
-            if (index >= 0)
-            {
-                chatCharacters.RemoveAt(index);
-                
-                if (index < chatItems.Count)
-                {
-                    Destroy(chatItems[index].gameObject);
-                    chatItems.RemoveAt(index);
-                }
-
-                if (currentActiveChat == chatCharacter && chatCharacters.Count > 0)
-                {
-                    SelectChat(chatCharacters[0]);
-                }
-            }
-        }
+        
 
         private void OnDestroy()
         {
-            foreach (var item in chatItems)
+            foreach (var item in _chatItems)
             {
                 if (item != null)
                 {

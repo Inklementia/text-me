@@ -21,11 +21,9 @@ namespace Neocortex.Samples
             chatCharacter = character;
             UpdateUI();
 
-            if (selectButton != null)
-            {
-                selectButton.onClick.RemoveAllListeners();
-                selectButton.onClick.AddListener(() => OnChatSelected?.Invoke(chatCharacter));
-            }
+            if (selectButton == null) return;
+            selectButton.onClick.RemoveAllListeners();
+            selectButton.onClick.AddListener(() => OnChatSelected?.Invoke(chatCharacter));
         }
 
         public void UpdateUI()

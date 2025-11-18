@@ -12,7 +12,7 @@ namespace Neocortex.Samples
 
         public string CharacterName => characterName;
         public Sprite CharacterImage => characterImage;
-        public string SystemPrompt => systemPrompt;
+        public string Model => model;
 
         public string GetSelectedModel()
         {

@@ -20,28 +20,22 @@ namespace Neocortex.Samples
 
         public UnityEvent OnMessageUpdated = new UnityEvent();
 
-        private OllamaRequest request;
-        private string lastMessage = "";
+        private OllamaRequest _request;
+        private string _lastMessage = "";
 
         public Character CharacterData => character;
-        public string LastMessage => lastMessage;
+        public string LastMessage => _lastMessage;
 
         void Start()
         {
-            Debug.Log("=== ChatCharacter Start() called ===");
-            
             if (character == null)
             {
                 Debug.LogError("Character is not assigned in ChatCharacter!");
-                if (chatPanel != null)
-                {
-                    chatPanel.AddMessage("Error: No character assigned!", false);
-                }
                 return;
             }
 
             Debug.Log($"Character: {character.CharacterName}");
-            Debug.Log($"System Prompt: {character.SystemPrompt}");
+            Debug.Log($"Model: {character.Model}");
 
             // Initialize UI
             if (characterNameText != null)
@@ -63,41 +57,24 @@ namespace Neocortex.Samples
             if (string.IsNullOrEmpty(modelName))
             {
                 Debug.LogError($"Model is not set in Character: {character.CharacterName}!");
-                if (chatPanel != null)
-                {
-                    chatPanel.AddMessage("No model assigned. Please set a model in the Character settings.", false);
-                }
-                
-                // Still allow input to show error message if user tries to send
-                if (chatInput != null)
-                {
-                    chatInput.OnSendButtonClicked.AddListener(OnUserMessageSentNoModel);
-                }
                 return;
             }
 
             Debug.Log($"Creating OllamaRequest with model: {modelName}");
-            request = new OllamaRequest();
-            request.OnChatResponseReceived += OnChatResponseReceived;
-            request.ModelName = modelName;
+            _request = new OllamaRequest();
+            _request.OnChatResponseReceived += OnChatResponseReceived;
+            _request.ModelName = modelName;
             chatInput.OnSendButtonClicked.AddListener(OnUserMessageSent);
 
-            // Set initial prompt
+            // Set system prompt
             if (!string.IsNullOrEmpty(character.SystemPrompt))
             {
-                Debug.Log($"Setting initial system prompt: {character.SystemPrompt}");
-                request.AddSystemMessage(character.SystemPrompt);
+                _request.AddSystemMessage(character.SystemPrompt);
             }
             else
             {
-                Debug.LogWarning("System prompt is empty!");
+                Debug.LogWarning($"System prompt is empty for {character.CharacterName}!");
             }
-        }
-
-        private void OnUserMessageSentNoModel(string message)
-        {
-            chatPanel.AddMessage(message, true);
-            chatPanel.AddMessage("Error: No model configured. Cannot send messages.", false);
         }
 
         private void OnBackButtonClicked()
@@ -108,15 +85,15 @@ namespace Neocortex.Samples
         private void OnChatResponseReceived(ChatResponse response)
         {
             chatPanel.AddMessage(response.message, false);
-            lastMessage = response.message;
+            _lastMessage = response.message;
             OnMessageUpdated?.Invoke();
         }
 
         private void OnUserMessageSent(string message)
         {
-            request.Send(message);
+            _request.Send(message);
             chatPanel.AddMessage(message, true);
-            lastMessage = message;
+            _lastMessage = message;
             OnMessageUpdated?.Invoke();
         }
 
@@ -138,9 +115,9 @@ namespace Neocortex.Samples
 
         private void OnDestroy()
         {
-            if (request != null)
+            if (_request != null)
             {
-                request.OnChatResponseReceived -= OnChatResponseReceived;
+                _request.OnChatResponseReceived -= OnChatResponseReceived;
             }
             
             if (chatInput != null)
